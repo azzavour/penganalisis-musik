@@ -11,7 +11,7 @@ class MusicTracksExport implements FromQuery, WithHeadings, ShouldAutoSize
 {
     protected $selectedIds;
 
-    public function __construct(array $selectedIds = null)
+    public function __construct(?array $selectedIds = null)
     {
         $this->selectedIds = $selectedIds;
     }

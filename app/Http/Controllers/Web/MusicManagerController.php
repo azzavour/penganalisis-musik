@@ -12,7 +12,7 @@ class MusicManagerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+   public function index(Request $request)
 {
     // Ambil data statistik
     $stats = [
@@ -26,9 +26,12 @@ class MusicManagerController extends Controller
 
     $query = MusicTrack::query();
 
-    // LOGIKA PENCARIAN YANG DIPERBAIKI
+    // LOGIKA PENCARIAN FINAL
     if ($request->has('search')) {
         $searchTerms = $request->input('search');
+
+        // Hapus 'trackPrice' jika ada untuk menghindari error
+        unset($searchTerms['trackPrice']);
 
         foreach ($searchTerms as $key => $value) {
             if (!empty($value)) {
@@ -44,10 +47,6 @@ class MusicManagerController extends Controller
                         break;
                     case 'price_max':
                         $query->where('trackPrice', '<=', $value);
-                        break;
-                    // FIX: Tambahkan case ini untuk menangani pencarian harga secara spesifik
-                    case 'trackPrice':
-                        $query->where('trackPrice', $value);
                         break;
                     default:
                         // Pencarian teks yang tidak case-sensitive untuk kolom lainnya

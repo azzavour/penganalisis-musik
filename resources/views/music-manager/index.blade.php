@@ -90,10 +90,10 @@
                                     @elseif ($key == 'releaseDate')
                                         <input type="date" name="search[releaseDate]" value="{{ request('search.releaseDate') }}" class="search-input">
                                     @elseif ($key == 'trackPrice')
-                                        <div class="flex space-x-2">
-                                            <input type="number" name="search[price_min]" placeholder="Min" value="{{ request('search.price_min') }}" class="search-input w-1/2" step="0.01">
-                                            <input type="number" name="search[price_max]" placeholder="Max" value="{{ request('search.price_max') }}" class="search-input w-1/2" step="0.01">
-                                        </div>
+                                         <div class="flex space-x-2">
+        <input type="number" name="search[price_min]" placeholder="Min" value="{{ request('search.price_min') }}" class="search-input w-1/2" step="0.01">
+        <input type="number" name="search[price_max]" placeholder="Max" value="{{ request('search.price_max') }}" class="search-input w-1/2" step="0.01">
+    </div>
                                     @else
                                         <input type="text" name="search[{{ $key }}]" placeholder="Search {{ $label }}..." value="{{ request('search.'.$key) }}" class="search-input">
                                     @endif
