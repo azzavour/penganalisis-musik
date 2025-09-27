@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
     plugins: [
@@ -12,9 +11,13 @@ export default defineConfig({
             ],
             refresh: true,
         }),
-        tailwindcss(),
     ],
     optimizeDeps: {
-        include: ['alpinejs', 'axios', 'xlsx']
-    }
+        include: ['alpinejs', 'axios']
+    },
+    server: {
+        hmr: {
+            host: 'localhost',
+        },
+    },
 });
