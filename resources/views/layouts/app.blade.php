@@ -7,9 +7,11 @@
 
     <title>@yield('title', 'Music Manager') - {{ config('app.name', 'Laravel') }}</title>
 
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
+    <!-- Scripts & Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 
@@ -22,6 +24,7 @@
 </head>
 <body class="h-full font-sans antialiased">
     <div class="flex h-full">
+        <!-- Sidebar -->
         <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
             <div class="h-16 flex items-center px-6 border-b border-gray-200">
                 <a href="#" class="flex items-center space-x-2">
@@ -33,31 +36,47 @@
             </div>
 
             <nav class="flex-1 p-4 space-y-2">
-    {{-- Tautan ke Music Manager --}}
-    <a href="{{ route('music-manager.index') }}" 
-       class="sidebar-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg {{ request()->routeIs('music-manager.index') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-        <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-        </svg>
-        Music Manager
-    </a>
-    {{-- Tautan ke Halaman Upload Baru --}}
-    <a href="{{ route('music-manager.create') }}" 
-       class="sidebar-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg {{ request()->routeIs('music-manager.create') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-        <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        New Music Order
-    </a>
-</nav>
+                {{-- Tautan ke Music Manager --}}
+                <a href="{{ route('music-manager.index') }}" 
+                   class="sidebar-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg {{ request()->routeIs('music-manager.index') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+                    </svg>
+                    Music Manager
+                </a>
+                {{-- Tautan ke Halaman Upload Baru --}}
+                <a href="{{ route('music-manager.create') }}" 
+                   class="sidebar-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg {{ request()->routeIs('music-manager.create') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    New Music Order
+                </a>
+            </nav>
         </aside>
 
+        <!-- Main Content -->
         <div class="flex-1 flex flex-col">
             <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-end px-6">
-    {{-- Kosongkan area ini atau tambahkan elemen lain jika perlu nanti --}}
-</header>
+                {{-- Header Content --}}
+            </header>
             
             <main class="flex-1 overflow-y-auto bg-gray-100">
+                {{-- NOTIFIKASI SUKSES ATAU GAGAL --}}
+                @if (session('success'))
+                    <div class="m-6 p-4 bg-green-100 border border-green-200 text-green-700 rounded-lg" role="alert">
+                        <p class="font-bold">Success!</p>
+                        <p>{{ session('success') }}</p>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                        <div class="m-6 p-4 bg-red-100 border border-red-200 text-red-700 rounded-lg" role="alert">
+        <p class="font-bold">Error!</p>
+        <p>{!! session('error') !!}</p>
+    </div>
+                @endif
+
                 @yield('content')
             </main>
         </div>

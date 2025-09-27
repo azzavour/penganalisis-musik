@@ -5,13 +5,12 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\MusicTrack;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel; // <-- Import Facade
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
 
 class MusicImportController extends Controller
 {
-    /**
-     * Tampilkan pratinjau data dari file Excel yang diunggah.
-     */
     public function preview(Request $request)
     {
         $request->validate([
@@ -19,26 +18,27 @@ class MusicImportController extends Controller
         ]);
 
         try {
-            // Ambil data dari sheet pertama, konversi ke array
             $data = Excel::toCollection(null, $request->file('file'))->first();
+            if ($data->isEmpty()) {
+                return response()->json(['error' => 'File Excel kosong atau tidak dapat dibaca.'], 422);
+            }
 
-            // Ambil 50 baris pertama untuk preview
-            $previewData = $data->slice(0, 50); 
-            $header = $previewData->pull(0); // Ambil baris pertama sebagai header
+            // Membersihkan kolom kosong dari preview agar konsisten
+            $header = $data->first()->filter()->values();
+            $rows = $data->slice(1)->map(function ($row) use ($header) {
+                return $row->take($header->count()); // Ambil data sesuai jumlah header
+            });
 
             return response()->json([
                 'header' => $header,
-                'rows' => $previewData->values(), // values() untuk reset keys
+                'rows' => $rows->slice(0, 50)->values(),
             ]);
-
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Gagal membaca file. Pastikan formatnya benar.'], 422);
+            Log::error('Error previewing file: ' . $e->getMessage());
+            return response()->json(['error' => 'Gagal memproses file. Pastikan formatnya benar.'], 422);
         }
     }
 
-    /**
-     * Simpan data dari file Excel yang diunggah ke database.
-     */
     public function import(Request $request)
     {
         $request->validate([
@@ -47,42 +47,84 @@ class MusicImportController extends Controller
 
         try {
             $data = Excel::toCollection(null, $request->file('file'))->first();
-            
-            // Hapus baris header
-            $rows = $data->slice(1);
-            $header = $data->first()->map(fn($item) => strtolower(str_replace(' ', '', $item)))->all();
-            
-            $insertData = [];
-            foreach ($rows as $row) {
-                // Gabungkan header dengan baris menjadi array asosiatif
-                $rowData = array_combine($header, $row->all());
 
-                $insertData[] = [
-                    'trackId'         => $rowData['trackid'],
-                    'trackName'       => $rowData['trackname'],
-                    'artistId'        => $rowData['artistid'],
-                    'artistName'      => $rowData['artistname'],
-                    'collectionName'  => $rowData['collectionname'],
-                    'primaryGenreName'=> $rowData['primarygenrename'],
-                    'releaseDate'     => \Carbon\Carbon::parse($rowData['releasedate']),
-                    'trackPrice'      => !empty($rowData['trackprice']) ? $rowData['trackprice'] : null,
-                    'collectionPrice' => !empty($rowData['collectionprice']) ? $rowData['collectionprice'] : null,
-                    'country'         => $rowData['country'],
-                    'currency'        => $rowData['currency'],
-                    'created_at'      => now(),
-                    'updated_at'      => now(),
-                ];
+            if ($data->isEmpty() || $data->count() < 2) {
+                return redirect()->route('music-manager.create')->with('error', 'File Excel harus memiliki setidaknya satu baris header dan satu baris data.');
             }
 
-            // Gunakan insert untuk performa yang lebih baik
+            // PERBAIKAN: Pastikan header diinisialisasi sebagai Collection dengan benar
+            $headerFromFile = collect($data->pull(0))
+                ->filter() // Hapus nilai null/kosong
+                ->map(fn($item) => strtolower(str_replace(' ', '', trim($item))))
+                ->values(); // Reset index array agar menjadi list sederhana
+            
+            $headerCount = $headerFromFile->count();
+
+            $expectedHeaders = collect(['trackid', 'trackname', 'artistid', 'artistname', 'collectionname', 'primarygenrename', 'releasedate', 'trackprice', 'collectionprice', 'country', 'currency']);
+            
+            $missingColumns = $expectedHeaders->diff($headerFromFile);
+            $extraColumns = $headerFromFile->diff($expectedHeaders);
+
+            if ($missingColumns->isNotEmpty() || $extraColumns->isNotEmpty()) {
+                $errorMessage = "Struktur header file Excel tidak sesuai.<ul>";
+                if ($missingColumns->isNotEmpty()) {
+                    $errorMessage .= "<li>Kolom yang **kurang**: <span style='color: red;'>" . $missingColumns->implode(', ') . "</span></li>";
+                }
+                if ($extraColumns->isNotEmpty()) {
+                    $errorMessage .= "<li>Kolom yang **berlebih**: <span style='color: red;'>" . $extraColumns->implode(', ') . "</span></li>";
+                }
+                $errorMessage .= "</ul>";
+                return redirect()->route('music-manager.create')->with('error', $errorMessage);
+            }
+            
+            $headerMapping = [
+                'trackid' => 'trackId',
+                'trackname' => 'trackName',
+                'artistid' => 'artistId',
+                'artistname' => 'artistName',
+                'collectionname' => 'collectionName',
+                'primarygenrename' => 'primaryGenreName',
+                'releasedate' => 'releaseDate',
+                'trackprice' => 'trackPrice',
+                'collectionprice' => 'collectionPrice',
+                'country' => 'country',
+                'currency' => 'currency',
+            ];
+
+            $insertData = [];
+            foreach ($data as $row) {
+                $rowData = $row->take($headerCount);
+                
+                if ($rowData->filter()->isEmpty()) {
+                    continue;
+                }
+                
+                $combinedData = array_combine($headerFromFile->all(), $rowData->all());
+                
+                $trackData = [];
+                foreach($headerMapping as $fileHeader => $dbColumn) {
+                    $trackData[$dbColumn] = $combinedData[$fileHeader] ?? null;
+                }
+                
+                $trackData['releaseDate'] = Carbon::parse($trackData['releaseDate']);
+                $trackData['trackPrice'] = !empty($trackData['trackPrice']) ? $trackData['trackPrice'] : null;
+                $trackData['collectionPrice'] = !empty($trackData['collectionPrice']) ? $trackData['collectionPrice'] : null;
+                $trackData['created_at'] = now();
+                $trackData['updated_at'] = now();
+
+                $insertData[] = $trackData;
+            }
+
             if (!empty($insertData)) {
                 MusicTrack::insert($insertData);
             }
 
-            return back()->with('success', 'Data berhasil diimpor!');
+            return redirect()->route('music-manager.index')->with('success', count($insertData) . ' data musik berhasil diimpor!');
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan saat mengimpor data. ' . $e->getMessage());
+            Log::error('Error importing file: ' . $e->getMessage());
+            return redirect()->route('music-manager.create')->with('error', 'Terjadi kesalahan saat mengimpor data. Pesan: ' . $e->getMessage());
         }
     }
 }
+
