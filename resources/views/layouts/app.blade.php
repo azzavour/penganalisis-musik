@@ -1,87 +1,44 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-gray-100">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Music Manager') - {{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'Laravel') }}</title>
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-    <!-- Scripts & Styles -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @stack('styles')
+        <!-- Scripts -->
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    </head>
+    <body class="font-sans antialiased">
+        <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+            @include('layouts.navigation')
 
-    <style>
-        /* Simple transition for sidebar */
-        .sidebar-link {
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-        }
-    </style>
-</head>
-<body class="h-full font-sans antialiased">
-    <div class="flex h-full">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
-            <div class="h-16 flex items-center px-6 border-b border-gray-200">
-                <a href="#" class="flex items-center space-x-2">
-                    <svg class="h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
-                    </svg>
-                    <span class="text-xl font-bold text-gray-800">{{ config('app.name', 'Laravel') }}</span>
-                </a>
-            </div>
-
-            <nav class="flex-1 p-4 space-y-2">
-                {{-- Tautan ke Music Manager --}}
-                <a href="{{ route('music-manager.index') }}" 
-                   class="sidebar-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg {{ request()->routeIs('music-manager.index') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-                    </svg>
-                    Music Manager
-                </a>
-                {{-- Tautan ke Halaman Upload Baru --}}
-                <a href="{{ route('music-manager.create') }}" 
-                   class="sidebar-link flex items-center px-4 py-2.5 text-sm font-medium rounded-lg {{ request()->routeIs('music-manager.create') ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                    <svg class="h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    New Music Order
-                </a>
-            </nav>
-        </aside>
-
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
-            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-end px-6">
-                {{-- Header Content --}}
-            </header>
-            
-            <main class="flex-1 overflow-y-auto bg-gray-100">
-                {{-- NOTIFIKASI SUKSES ATAU GAGAL --}}
-                @if (session('success'))
-                    <div class="m-6 p-4 bg-green-100 border border-green-200 text-green-700 rounded-lg" role="alert">
-                        <p class="font-bold">Success!</p>
-                        <p>{{ session('success') }}</p>
+            <!-- Page Heading -->
+            @isset($header)
+                <header class="bg-white dark:bg-gray-800 shadow">
+                    <form method="POST" action="{{ route('logout') }}">
+    @csrf
+    <x-dropdown-link :href="route('logout')"
+            onclick="event.preventDefault();
+                        this.closest('form').submit();">
+        {{ __('Log Out') }}
+    </x-dropdown-link>
+</form>
+                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                        {{ $header }}
                     </div>
-                @endif
+                </header>
+            @endisset
 
-                @if (session('error'))
-                        <div class="m-6 p-4 bg-red-100 border border-red-200 text-red-700 rounded-lg" role="alert">
-        <p class="font-bold">Error!</p>
-        <p>{!! session('error') !!}</p>
-    </div>
-                @endif
-
-                @yield('content')
+            <!-- Page Content -->
+            <main>
+                {{ $slot }}
             </main>
         </div>
-    </div>
-
-    @stack('scripts')
-</body>
+    </body>
 </html>
