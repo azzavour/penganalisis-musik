@@ -9,10 +9,7 @@ use Illuminate\Http\Request;
 class MusicManagerController extends Controller
 {
     /**
-     * Tampilkan halaman utama music manager dengan data.
-     */
-    /**
-     * Tampilkan halaman utama music manager dengan data.
+     * Display a listing of the resource.
      */
     public function index(Request $request)
 {
@@ -23,16 +20,39 @@ class MusicManagerController extends Controller
         'total_genres' => MusicTrack::distinct('primaryGenreName')->count(),
     ];
 
-    // Initialize the query builder here
+    // Ambil daftar genre unik untuk dropdown
+    $genres = MusicTrack::distinct()->orderBy('primaryGenreName')->pluck('primaryGenreName');
+
     $query = MusicTrack::query();
 
-    // LOGIKA BARU UNTUK SEARCH PER KOLOM
+    // LOGIKA PENCARIAN YANG DIPERBAIKI
     if ($request->has('search')) {
         $searchTerms = $request->input('search');
+
         foreach ($searchTerms as $key => $value) {
-            // Hanya proses jika ada input di search bar
             if (!empty($value)) {
-                $query->where($key, 'like', '%' . $value . '%');
+                switch ($key) {
+                    case 'primaryGenreName':
+                        $query->where('primaryGenreName', $value);
+                        break;
+                    case 'releaseDate':
+                        $query->whereDate('releaseDate', $value);
+                        break;
+                    case 'price_min':
+                        $query->where('trackPrice', '>=', $value);
+                        break;
+                    case 'price_max':
+                        $query->where('trackPrice', '<=', $value);
+                        break;
+                    // FIX: Tambahkan case ini untuk menangani pencarian harga secara spesifik
+                    case 'trackPrice':
+                        $query->where('trackPrice', $value);
+                        break;
+                    default:
+                        // Pencarian teks yang tidak case-sensitive untuk kolom lainnya
+                        $query->whereRaw('LOWER("'.$key.'") LIKE ?', ['%'.strtolower($value).'%']);
+                        break;
+                }
             }
         }
     }
@@ -42,18 +62,20 @@ class MusicManagerController extends Controller
         $direction = $request->input('sort_direction', 'asc');
         $query->orderBy($request->input('sort_by'), $direction);
     } else {
-        // Urutkan berdasarkan data terbaru jika tidak ada sorting lain
         $query->latest('id');
     }
 
-    // Ambil data untuk tabel dengan paginasi
+    // Paginasi
     $musicData = $query->paginate(10)->withQueryString();
 
-    // Kirim data ke view
-    return view('music-manager.index', compact('stats', 'musicData'));
+    // Kirim SEMUA data yang dibutuhkan ke view
+    return view('music-manager.index', compact('stats', 'musicData', 'genres'));
 }
-        public function create()
-    {   
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {    
         return view('music-manager.create');
     }
 }

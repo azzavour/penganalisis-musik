@@ -128,27 +128,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function renderTable(header, rows) {
-        if (!header || !rows) {
-            tableContainer.innerHTML = `<p class="text-red-500 p-4">Invalid data format received from server.</p>`;
-            return;
-        }
-
-        let table = '<table class="min-w-full divide-y divide-gray-200 text-left text-sm">';
-        table += '<thead class="bg-gray-50"><tr>';
-        header.forEach(h => table += `<th class="px-4 py-2 font-medium text-gray-500 uppercase">${h}</th>`);
-        table += '</tr></thead><tbody class="bg-white divide-y divide-gray-200">';
-        rows.forEach(row => {
-            table += '<tr>';
-            header.forEach(h_key => {
-                const cellValue = row.find(cell => cell.key === h_key.toLowerCase())?.value ?? (row[h_key] ?? '');
-                table += `<td class="px-4 py-2 whitespace-nowrap text-gray-700">${cellValue || ''}</td>`;
-            });
-            table += '</tr>';
-        });
-        table += '</tbody></table>';
-        tableContainer.innerHTML = table;
+function renderTable(header, rows) {
+    if (!header || !rows) {
+        tableContainer.innerHTML = `<p class="text-red-500 p-4">Invalid data format received from server.</p>`;
+        return;
     }
+
+    let table = '<table class="min-w-full divide-y divide-gray-200 text-left text-sm">';
+    table += '<thead class="bg-gray-50"><tr>';
+    header.forEach(h => table += `<th class="px-4 py-2 font-medium text-gray-500 uppercase">${h}</th>`);
+    table += '</tr></thead><tbody class="bg-white divide-y divide-gray-200">';
+    
+    // PERBAIKAN LOGIKA ADA DI SINI
+    rows.forEach(row => {
+        table += '<tr>';
+        row.forEach(cell => {
+            // Langsung gunakan nilai sel dari array
+            table += `<td class="px-4 py-2 whitespace-nowrap text-gray-700">${cell || ''}</td>`;
+        });
+        table += '</tr>';
+    });
+
+    table += '</tbody></table>';
+    tableContainer.innerHTML = table;
+}
 
     cancelBtn.addEventListener('click', () => {
         modal.classList.add('hidden');

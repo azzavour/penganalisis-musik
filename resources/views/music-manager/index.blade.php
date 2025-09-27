@@ -56,13 +56,39 @@
                             @endforeach
                         </tr>
                         {{-- Header untuk Search Bar --}}
-                        <tr>
-                            @foreach ($columns as $key => $label)
-                                <th class="px-4 pb-3">
-                                    <input type="text" name="search[{{ $key }}]" placeholder="Search {{ $label }}..." value="{{ request('search.'.$key) }}" class="search-input">
-                                </th>
-                            @endforeach
-                        </tr>
+                        {{-- Header untuk Search Bar --}}
+<tr>
+    @foreach ($columns as $key => $label)
+        <th class="px-4 pb-3 align-top">
+            @if ($key == 'primaryGenreName')
+                {{-- Dropdown untuk Genre --}}
+                <select name="search[primaryGenreName]" class="search-input">
+                    <option value="">All Genres</option>
+                    @foreach ($genres as $genre)
+                        <option value="{{ $genre }}" {{ request('search.primaryGenreName') == $genre ? 'selected' : '' }}>
+                            {{ $genre }}
+                        </option>
+                    @endforeach
+                </select>
+
+            @elseif ($key == 'releaseDate')
+                {{-- Input Tanggal untuk Release Date --}}
+                <input type="date" name="search[releaseDate]" value="{{ request('search.releaseDate') }}" class="search-input">
+
+            @elseif ($key == 'trackPrice')
+                {{-- Input Rentang Harga untuk Price --}}
+                <div class="flex space-x-2">
+                    <input type="number" name="search[price_min]" placeholder="Min" value="{{ request('search.price_min') }}" class="search-input w-1/2" step="0.01">
+                    <input type="number" name="search[price_max]" placeholder="Max" value="{{ request('search.price_max') }}" class="search-input w-1/2" step="0.01">
+                </div>
+
+            @else
+                {{-- Input Teks standar untuk kolom lain --}}
+                <input type="text" name="search[{{ $key }}]" placeholder="Search {{ $label }}..." value="{{ request('search.'.$key) }}" class="search-input">
+            @endif
+        </th>
+    @endforeach
+</tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
                         @forelse ($musicData as $track)
