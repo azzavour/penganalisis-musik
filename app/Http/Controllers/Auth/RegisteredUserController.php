@@ -45,6 +45,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // UBAH BARIS INI
+        return redirect(route('music-manager.index', absolute: false));
     }
 }

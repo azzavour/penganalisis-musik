@@ -16,20 +16,16 @@
     {{-- Page Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Music Manager</h1>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Music Orders</h1>
             <p class="mt-1 text-sm text-gray-500">
                 Displaying {{ $musicData->firstItem() }}-{{ $musicData->lastItem() }} of {{ $musicData->total() }} results
             </p>
         </div>
         <div class="flex items-center space-x-2 mt-4 sm:mt-0">
             {{-- Tombol Download --}}
-            <button id="export-selected-btn" class="btn-secondary inline-flex items-center" disabled>
-                <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                Export Selected
-            </button>
             <a href="{{ route('music-manager.export') }}" class="btn-secondary inline-flex items-center">
                 <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                Export All
+                Export
             </a>
             {{-- Tombol Tambah Data --}}
             <a href="{{ route('music-manager.create') }}" class="btn-primary inline-flex items-center">
@@ -66,7 +62,6 @@
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider align-top">
                                     <a href="{{ route('music-manager.index', array_merge(request()->query(), ['sort_by' => $key, 'sort_direction' => request('sort_by') == $key && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center space-x-1 group">
                                         <span>{{ $label }}</span>
-                                        <svg class="h-4 w-4 text-gray-400 opacity-50 group-hover:opacity-100" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" /></svg>
                                     </a>
                                 </th>
                             @endforeach
@@ -91,9 +86,9 @@
                                         <input type="date" name="search[releaseDate]" value="{{ request('search.releaseDate') }}" class="search-input">
                                     @elseif ($key == 'trackPrice')
                                          <div class="flex space-x-2">
-        <input type="number" name="search[price_min]" placeholder="Min" value="{{ request('search.price_min') }}" class="search-input w-1/2" step="0.01">
-        <input type="number" name="search[price_max]" placeholder="Max" value="{{ request('search.price_max') }}" class="search-input w-1/2" step="0.01">
-    </div>
+											<input type="number" name="search[price_min]" placeholder="Min" value="{{ request('search.price_min') }}" class="search-input w-1/2" step="0.01">
+											<input type="number" name="search[price_max]" placeholder="Max" value="{{ request('search.price_max') }}" class="search-input w-1/2" step="0.01">
+										</div>
                                     @else
                                         <input type="text" name="search[{{ $key }}]" placeholder="Search {{ $label }}..." value="{{ request('search.'.$key) }}" class="search-input">
                                     @endif
