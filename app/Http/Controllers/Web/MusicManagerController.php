@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\MusicTrack;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MusicManagerController extends Controller
 {
@@ -77,5 +78,17 @@ class MusicManagerController extends Controller
     public function create()
     {    
         return view('music-manager.create');
+    }
+
+      public function export(Request $request)
+    {
+        // Ambil ID yang dipilih dari request, jika ada
+        $selectedIds = $request->input('selected_ids');
+
+        // Tentukan nama file
+        $fileName = 'music-tracks-' . now()->format('Y-m-d') . '.xlsx';
+
+        // Panggil class export dengan ID yang dipilih (atau null jika tidak ada)
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\MusicTracksExport($selectedIds), $fileName);
     }
 }

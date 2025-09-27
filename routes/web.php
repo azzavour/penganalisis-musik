@@ -13,3 +13,4 @@ Route::get('/music-manager/create', [MusicManagerController::class, 'create'])->
 // Rute untuk proses backend (preview & import)
 Route::post('music-manager/preview', [MusicImportController::class, 'preview'])->name('music-manager.preview');
 Route::post('music-manager/import', [MusicImportController::class, 'import'])->name('music-manager.import');
+Route::get('/music-manager/export', [MusicManagerController::class, 'export'])->name('music-manager.export');
