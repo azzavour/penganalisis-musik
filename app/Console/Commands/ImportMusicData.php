@@ -39,7 +39,7 @@ class ImportMusicData extends Command
         $this->info("Starting import for file: {$file}");
 
         try {
-            $import = new SpotifyUserImport;
+            $import = new AppleMusicImport;
             $import->withOutput($this->output);
             $import->import($filePath);
 
