@@ -11,42 +11,49 @@ class MusicManagerController extends Controller
     /**
      * Tampilkan halaman utama music manager dengan data.
      */
+    /**
+     * Tampilkan halaman utama music manager dengan data.
+     */
     public function index(Request $request)
-    {
-        // Ambil data statistik
-        $stats = [
-            'total_tracks' => MusicTrack::count(),
-            'total_artists' => MusicTrack::distinct('artistName')->count(),
-            'total_genres' => MusicTrack::distinct('primaryGenreName')->count(),
-        ];
+{
+    // Ambil data statistik
+    $stats = [
+        'total_tracks' => MusicTrack::count(),
+        'total_artists' => MusicTrack::distinct('artistName')->count(),
+        'total_genres' => MusicTrack::distinct('primaryGenreName')->count(),
+    ];
 
-        $query = MusicTrack::query();
+    // Initialize the query builder here
+    $query = MusicTrack::query();
 
-        // Handle pencarian
-        if ($request->has('search')) {
-            foreach ($request->input('search') as $key => $value) {
-                if ($value) {
-                    $query->where($key, 'like', '%' . $value . '%');
-                }
+    // LOGIKA BARU UNTUK SEARCH PER KOLOM
+    if ($request->has('search')) {
+        $searchTerms = $request->input('search');
+        foreach ($searchTerms as $key => $value) {
+            // Hanya proses jika ada input di search bar
+            if (!empty($value)) {
+                $query->where($key, 'like', '%' . $value . '%');
             }
         }
-
-        // Handle pengurutan
-        if ($request->has('sort_by')) {
-            $direction = $request->input('sort_direction', 'asc');
-            $query->orderBy($request->input('sort_by'), $direction);
-        } else {
-            $query->orderBy('id', 'desc');
-        }
-
-        // Ambil data untuk tabel dengan paginasi
-        $musicData = $query->paginate(10);
-
-        // Kirim kedua data (stats dan musicData) ke view
-        return view('music-manager.index', compact('stats', 'musicData'));
     }
+
+    // Handle pengurutan
+    if ($request->has('sort_by')) {
+        $direction = $request->input('sort_direction', 'asc');
+        $query->orderBy($request->input('sort_by'), $direction);
+    } else {
+        // Urutkan berdasarkan data terbaru jika tidak ada sorting lain
+        $query->latest('id');
+    }
+
+    // Ambil data untuk tabel dengan paginasi
+    $musicData = $query->paginate(10)->withQueryString();
+
+    // Kirim data ke view
+    return view('music-manager.index', compact('stats', 'musicData'));
+}
         public function create()
-    {
+    {   
         return view('music-manager.create');
     }
 }
