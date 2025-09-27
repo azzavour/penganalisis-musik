@@ -20,13 +20,29 @@ class MusicManagerController extends Controller
             'total_genres' => MusicTrack::distinct('primaryGenreName')->count(),
         ];
 
+        $query = MusicTrack::query();
+
+        // Handle pencarian
+        if ($request->has('search')) {
+            foreach ($request->input('search') as $key => $value) {
+                if ($value) {
+                    $query->where($key, 'like', '%' . $value . '%');
+                }
+            }
+        }
+
+        // Handle pengurutan
+        if ($request->has('sort_by')) {
+            $direction = $request->input('sort_direction', 'asc');
+            $query->orderBy($request->input('sort_by'), $direction);
+        } else {
+            $query->orderBy('id', 'desc');
+        }
+
         // Ambil data untuk tabel dengan paginasi
-        $musicData = MusicTrack::orderBy('id', 'desc')->paginate(10);
+        $musicData = $query->paginate(10);
 
         // Kirim kedua data (stats dan musicData) ke view
         return view('music-manager.index', compact('stats', 'musicData'));
     }
-
-    // Fungsi-fungsi lain seperti upload, preview, dll. bisa tetap ada
-    // atau disederhanakan nanti jika diperlukan.
 }
