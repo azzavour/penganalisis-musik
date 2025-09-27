@@ -45,4 +45,8 @@ class MusicManagerController extends Controller
         // Kirim kedua data (stats dan musicData) ke view
         return view('music-manager.index', compact('stats', 'musicData'));
     }
+        public function create()
+    {
+        return view('music-manager.create');
+    }
 }
