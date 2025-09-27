@@ -1,6 +1,5 @@
 import Alpine from 'alpinejs';
 import axios from 'axios';
-import * as XLSX from 'xlsx';
 
 // Setup axios defaults
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
@@ -35,9 +34,10 @@ window.musicManager = function(initialStats = {}) {
         // Upload modal
         showUploadModal: false,
         previewData: [],
+        previewHeaders: [], // Tambahkan ini untuk menyimpan header
         uploadStatus: '',
         uploading: false,
-        currentFile: null,
+        fileToUpload: null, // Ganti nama dari currentFile
         
         // Stats and notifications
         stats: initialStats,
@@ -70,19 +70,17 @@ window.musicManager = function(initialStats = {}) {
                         delete params[key];
                     }
                 });
-
-                const response = await axios.get('/music-manager/data', { params });
                 
-                if (response.data.success) {
-                    this.musicData = response.data.data;
-                    if (response.data.meta) {
-                        this.currentPage = response.data.meta.current_page;
-                        this.totalPages = response.data.meta.last_page;
-                        this.totalRecords = response.data.meta.total;
-                    }
-                } else {
-                    this.showNotification('Failed to fetch data', 'error');
+                // Pastikan URL-nya benar
+                const response = await axios.get('/api/music-tracks', { params });
+                
+                this.musicData = response.data.data;
+                if (response.data.meta) {
+                    this.currentPage = response.data.meta.current_page;
+                    this.totalPages = response.data.meta.last_page;
+                    this.totalRecords = response.data.meta.total;
                 }
+
             } catch (error) {
                 console.error('Error fetching data:', error);
                 this.showNotification('Error fetching data', 'error');
@@ -109,6 +107,57 @@ window.musicManager = function(initialStats = {}) {
             await this.fetchData();
         },
 
+        // File upload handling (HANYA SATU FUNGSI INI)
+        handleFileUpload(event) {
+            this.fileToUpload = event.target.files[0];
+            if (!this.fileToUpload) return;
+
+            const formData = new FormData();
+            formData.append('file', this.fileToUpload);
+
+            // Kirim file ke backend untuk pratinjau
+            axios.post('/api/music-tracks/preview', formData)
+                .then(response => {
+                    this.previewData = response.data.preview_data;
+                    if (this.previewData.length > 0) {
+                        this.previewHeaders = Object.keys(this.previewData[0]);
+                    }
+                    this.showUploadModal = true;
+                })
+                .catch(error => {
+                    alert('Gagal memuat pratinjau: ' + (error.response?.data?.message || error.message));
+                });
+        },
+
+        // Confirm and upload data
+        async confirmUpload() {
+            if (!this.fileToUpload) return;
+
+            this.uploading = true;
+            this.uploadStatus = 'Uploading data...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', this.fileToUpload);
+
+                const response = await axios.post('/api/music-tracks/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                
+                this.showNotification('Data uploaded successfully!', 'success');
+                this.closeModal();
+                await this.fetchData(); // Refresh data
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                const message = error.response?.data?.message || 'Error uploading data';
+                this.showNotification(message, 'error');
+            } finally {
+                this.uploading = false;
+                this.uploadStatus = '';
+            }
+        },
+        
         // Pagination methods
         async previousPage() {
             if (this.currentPage > 1) {
@@ -137,7 +186,6 @@ window.musicManager = function(initialStats = {}) {
             let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
             let end = Math.min(this.totalPages, start + maxVisible - 1);
             
-            // Adjust start if we're near the end
             if (end - start < maxVisible - 1) {
                 start = Math.max(1, end - maxVisible + 1);
             }
@@ -148,96 +196,11 @@ window.musicManager = function(initialStats = {}) {
             return pages;
         },
 
-        // File upload handling
-        async handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-                this.showNotification('Please select a valid Excel file (.xlsx or .xls)', 'error');
-                return;
-            }
-
-            this.currentFile = file;
-            this.loading = true;
-            this.uploadStatus = 'Reading file...';
-
-            try {
-                // Read file using XLSX library for client-side preview
-                const data = await this.readExcelFile(file);
-                this.previewData = data.slice(0, 50); // Limit preview
-                this.showUploadModal = true;
-            } catch (error) {
-                console.error('Error reading file:', error);
-                this.showNotification('Error reading Excel file', 'error');
-            } finally {
-                this.loading = false;
-                this.uploadStatus = '';
-                // Reset input
-                event.target.value = '';
-            }
-        },
-
-        // Read Excel file using XLSX library
-        readExcelFile(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const sheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[sheetName];
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                        resolve(jsonData);
-                    } catch (error) {
-                        reject(error);
-                    }
-                };
-                reader.onerror = () => reject(new Error('Failed to read file'));
-                reader.readAsArrayBuffer(file);
-            });
-        },
-
-        // Confirm and upload data
-        async confirmUpload() {
-            if (!this.currentFile) return;
-
-            this.uploading = true;
-            this.uploadStatus = 'Uploading data to database...';
-
-            try {
-                const formData = new FormData();
-                formData.append('file', this.currentFile);
-
-                const response = await axios.post('/music-manager/upload', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                });
-
-                if (response.data.success) {
-                    this.showNotification('Data uploaded successfully!', 'success');
-                    this.closeModal();
-                    await this.fetchData(); // Refresh data
-                } else {
-                    this.showNotification(response.data.message || 'Upload failed', 'error');
-                }
-            } catch (error) {
-                console.error('Upload error:', error);
-                const message = error.response?.data?.message || 'Error uploading data';
-                this.showNotification(message, 'error');
-            } finally {
-                this.uploading = false;
-                this.uploadStatus = '';
-            }
-        },
-
         // Close upload modal
         closeModal() {
             this.showUploadModal = false;
             this.previewData = [];
-            this.currentFile = null;
+            this.fileToUpload = null;
             this.uploadStatus = '';
             this.uploading = false;
         },
