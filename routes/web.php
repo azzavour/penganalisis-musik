@@ -3,15 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\MusicManagerController;
 
-// Default Laravel route
-Route::get('/', function () {
-    return view('welcome');
-});
+// Arahkan halaman utama langsung ke Music Manager
+Route::get('/', [MusicManagerController::class, 'index'])->name('music-manager.index');
 
-// Music Manager routes
-Route::prefix('music-manager')->name('music-manager.')->group(function () {
-    Route::get('/', [MusicManagerController::class, 'index'])->name('index');
-    Route::get('/data', [MusicManagerController::class, 'getData'])->name('data');
-    Route::post('/preview-upload', [MusicManagerController::class, 'previewUpload'])->name('preview-upload');
-    Route::post('/upload', [MusicManagerController::class, 'uploadData'])->name('upload');
-});
+// Anda bisa menambahkan rute untuk upload nanti jika diperlukan
+// Route::post('/upload', [MusicManagerController::class, 'upload'])->name('music-manager.upload');
